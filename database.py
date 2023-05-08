@@ -71,6 +71,27 @@ class Database():
             connection.close()
         except Exception as e:
             print(e)
+
+    def get_video_to_process(self):
+        try:
+            connection = self.get_connection()
+            result = connection.cursor().execute(f"SELECT * FROM videos WHERE status = 'UPLOADED' ORDER BY upload_datetime ASC").fetchall()
+            connection.close()
+            if result is not None:
+                result = result[0]
+                video = {}
+                video['id'] = result[0]
+                video['name'] = result[1]
+                video['upload_datetime'] = result[2]
+                video['type'] = result[3]
+                video['saved_name'] = result[4]
+                video['summary_name'] = result[5]
+                video['status'] = result[6]
+                return video
+            return result
+        except Exception as e:
+            #print(e)
+            return None
         
 
 DATABASE = Database('videos.db')

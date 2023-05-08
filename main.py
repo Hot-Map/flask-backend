@@ -1,13 +1,21 @@
 import os
+import threading
+import subprocess
 from app import app
 from datetime import datetime
 from database import DATABASE
 from werkzeug.utils import secure_filename
 from flask import flash, request, redirect, url_for, render_template, jsonify, send_from_directory
-	
+from video_processor import task
+
+SERVER_IS_RUNNING = True
+lock = threading.Lock()
+
+
 @app.route('/')
 def upload_form():
 	return render_template('upload.html')
+
 
 @app.route('/', methods=['POST'])
 def upload():
@@ -22,16 +30,18 @@ def upload():
 		filename = file.filename
 		file_extension = os.path.splitext(filename)[-1]
 		filename = filename.replace(file_extension, "")
-		
+
 		now = datetime.now()
 		save_filename = secure_filename(filename + '_' + str(now) + file_extension)
 		file.save(os.path.join(app.config['UPLOAD_FOLDER'], save_filename))
-		#print('upload_video filename: ' + filename)
-		uuid = DATABASE.insert_video(video_name=filename, datetime=now, type=file_extension[1:], saved_name=save_filename, status='UPLOADED')
+		# print('upload_video filename: ' + filename)
+		uuid = DATABASE.insert_video(video_name=filename, datetime=now,
+		                             type=file_extension[1:], saved_name=save_filename, status='UPLOADED')
 		flash('Video successfully uploaded and displayed below')
 		print("dd", filename, file_extension)
 		return render_template('upload.html', filename=save_filename)
-	
+
+
 @app.route('/upload', methods=['POST'])
 def upload_video():
 	if 'file' not in request.files:
@@ -45,19 +55,22 @@ def upload_video():
 		filename = file.filename
 		file_extension = os.path.splitext(filename)[-1]
 		filename = filename.replace(file_extension, "")
-		
+
 		now = datetime.now()
 		save_filename = secure_filename(filename + '_' + str(now) + file_extension)
 		file.save(os.path.join(app.config['UPLOAD_FOLDER'], save_filename))
-		#print('upload_video filename: ' + filename)
-		uuid = DATABASE.insert_video(video_name=filename, datetime=now, type=file_extension[1:], saved_name=save_filename, status='UPLOADED')
+		# print('upload_video filename: ' + filename)
+		uuid = DATABASE.insert_video(video_name=filename, datetime=now,
+		                             type=file_extension[1:], saved_name=save_filename, status='UPLOADED')
 		flash('Video successfully uploaded and displayed below')
 		print("dd", filename, file_extension)
 		return render_template('upload.html', filename=save_filename)
 
+
 @app.route('/display/<filename>')
 def display_video(filename):
 	return redirect(url_for('static', filename='uploads/' + filename), code=301)
+
 
 @app.route('/api/status', methods=['GET'])
 def get_video():
@@ -72,7 +85,7 @@ def get_video():
 			response = {'status': status}
 	except Exception as e:
 		response = {'exception': e}
-	
+
 	return jsonify(response)
 
 
@@ -85,7 +98,7 @@ def download(video_id):
 		return send_from_directory(app.config['SUMMARY_FOLDER'], filename, as_attachment=True)
 	except Exception as e:
 	    return jsonify({'error': 'video_id is not valid'})
-	
+
 
 @app.route('/download')
 def download_video():
@@ -94,5 +107,19 @@ def download_video():
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename, as_attachment=True)
 
 
+def run_script():
+    global SERVER_IS_RUNNING
+    while SERVER_IS_RUNNING: task()
+    print(f"Processing Thread with id {threading.current_thread().ident} closed")
+    #subprocess.call(["python", "video_processor.py"])
+
+
 if __name__ == "__main__":
+    with lock: SERVER_IS_RUNNING = True
+    thread = threading.Thread(target=run_script)
+    thread.start()
     app.run(debug=True)
+    with lock: SERVER_IS_RUNNING = False
+    thread.join()
+    print(f"Server Thread with id {threading.current_thread().ident} closed")
+    print("end")
