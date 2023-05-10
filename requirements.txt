@@ -10,3 +10,5 @@ torch_geometric==2.3.1
 torchvision==0.15.2
 tqdm==4.65.0
 Werkzeug==2.3.3
+opencv-python==4.7.0.72
+scenedetect==0.6.1
