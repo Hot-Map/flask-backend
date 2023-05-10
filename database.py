@@ -63,10 +63,10 @@ class Database():
             return None
         
     
-    def update_video_status(self, video_id:str, status:str):
+    def update_video(self, video_id:str, field:str, value):
         try:
             connection = self.get_connection()
-            connection.cursor().execute("UPDATE videos SET status=? WHERE id=?", (status, video_id))
+            connection.cursor().execute(f"UPDATE videos SET {field.lower()}=? WHERE id=?", (value, video_id))
             connection.commit()
             connection.close()
         except Exception as e:

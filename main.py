@@ -64,7 +64,7 @@ def upload_video():
 		                             type=file_extension[1:], saved_name=save_filename, status='UPLOADED')
 		flash('Video successfully uploaded and displayed below')
 		print("dd", filename, file_extension)
-		return render_template('upload.html', filename=save_filename)
+		return jsonify({'video_id': uuid})
 
 
 @app.route('/display/<filename>')
@@ -109,7 +109,7 @@ def download_video():
 
 def run_script():
     global SERVER_IS_RUNNING
-    while SERVER_IS_RUNNING: task()
+    while SERVER_IS_RUNNING: task(app.config)
     print(f"Processing Thread with id {threading.current_thread().ident} closed")
     #subprocess.call(["python", "video_processor.py"])
 
