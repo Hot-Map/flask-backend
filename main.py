@@ -121,7 +121,7 @@ if __name__ == "__main__":
     with lock: SERVER_IS_RUNNING = True
     thread = threading.Thread(target=run_script)
     thread.start()
-    app.run(debug=True)
+    app.run(host="0.0.0.0", port=5001, debug=True)
     with lock: SERVER_IS_RUNNING = False
     thread.join()
     print(f"Server Thread with id {threading.current_thread().ident} closed")
