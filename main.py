@@ -72,10 +72,9 @@ def display_video(filename):
 	return redirect(url_for('static', filename='uploads/' + filename), code=301)
 
 
-@app.route('/api/status', methods=['GET'])
-def get_video():
+@app.route('/status/<path:video_id>', methods=['GET'])
+def get_video(video_id):
 	try:
-		video_id = request.args['video_id']
 		print("video_id", video_id)
 		status = DATABASE.get_video_field(video_id=video_id, field="status")
 		print(status)
