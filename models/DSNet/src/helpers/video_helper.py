@@ -8,6 +8,7 @@ from PIL import Image
 from numpy import linalg
 from torch import nn
 from torchvision import transforms, models
+from scenedetect import detect, AdaptiveDetector
 
 from kts.cpd_auto import cpd_auto
 
@@ -70,7 +71,6 @@ class VideoPreprocessor(object):
 
     def kts(self, n_frames, features):
         seq_len = len(features)
-        picks = np.arange(0, seq_len) * self.sample_rate
 
         # compute change points using KTS
         kernel = np.matmul(features, features.T)
@@ -82,9 +82,23 @@ class VideoPreprocessor(object):
         change_points = np.vstack((begin_frames, end_frames - 1)).T
 
         n_frame_per_seg = end_frames - begin_frames
-        return change_points, n_frame_per_seg, picks
+        return change_points, n_frame_per_seg
+    
+    def get_change_points(self, video):
+        scene_list = detect(video, AdaptiveDetector())
+        change_points = []
+        n_frame_per_seg = []
+        for scene in scene_list:
+            f0 = scene[0].get_frames()
+            f1 = scene[1].get_frames()-1
+            change_points.append((f0, f1))
+            n_frame_per_seg.append(f1 - f0 + 1)
+        return change_points, n_frame_per_seg
 
     def run(self, video_path: PathLike):
         n_frames, features = self.get_features(video_path)
-        cps, nfps, picks = self.kts(n_frames, features)
+        seq_len = len(features)
+        picks = np.arange(0, seq_len) * self.sample_rate
+        #cps, nfps = self.kts(n_frames, features)
+        cps, nfps = self.get_change_points(video_path)
         return n_frames, features, cps, nfps, picks
