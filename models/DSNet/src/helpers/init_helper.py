@@ -53,6 +53,7 @@ def get_parser() -> argparse.ArgumentParser:
     parser.add_argument('--sample-rate', type=int, default=15)
     parser.add_argument('--source', type=str, default=None)
     parser.add_argument('--save-path', type=str, default=None)
+    parser.add_argument('--development', type=str, default='False')
 
     # common model config
     parser.add_argument('--base-model', type=str, default='attention',

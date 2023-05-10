@@ -1,6 +1,7 @@
 import cv2
 import numpy as np
 import torch
+import random
 
 from helpers import init_helper, vsumm_helper, bbox_helper, video_helper
 from modules.model_zoo import get_model
@@ -8,7 +9,28 @@ from modules.model_zoo import get_model
 
 def main():
     args = init_helper.get_arguments()
+    print("args:", args)
 
+    if args.development == 'True': #random selected frames
+        cap = cv2.VideoCapture(args.source)
+        width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+        height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+        fps = cap.get(cv2.CAP_PROP_FPS)
+
+        fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+        out = cv2.VideoWriter(args.save_path, fourcc, fps, (width, height))
+        frame_idx = 0
+        while True:
+            ret, frame = cap.read()
+            if not ret:
+                break
+            if bool(random.randint(0, 1)):
+                out.write(frame)
+            frame_idx += 1
+        out.release()
+        cap.release()
+        return
+    
     # load model
     print('Loading DSNet model ...')
     model = get_model(args.model, **vars(args))

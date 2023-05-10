@@ -93,11 +93,14 @@ def get_video():
 def download(video_id):
 	try:
 		filename = DATABASE.get_video_field(video_id=video_id, field="summary_name")
+		print("filename", filename)
 		if filename == "":
 			return jsonify({'error': f'{video_id} is not ready'})
 		return send_from_directory(app.config['SUMMARY_FOLDER'], filename, as_attachment=True)
 	except Exception as e:
-	    return jsonify({'error': 'video_id is not valid'})
+		print(e)
+		print(video_id)
+		return jsonify({'error': 'video_id is not valid'})
 
 
 @app.route('/download')

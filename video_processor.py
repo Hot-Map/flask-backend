@@ -8,9 +8,13 @@ def task(config):
     video = DATABASE.get_video_to_process()
     if video is not None:
         video_path = config['UPLOAD_FOLDER'] + video['saved_name']
-        output_dir = config['SUMMARY_FOLDER'] + 'summary' + video['saved_name']
+        output_dir = config['SUMMARY_FOLDER'] + 'summary-' + video['saved_name']
 
-        command = ["python", "models/DSNet/src/infer.py", "anchor-based", "--ckpt-path", chck_pt, "--source", video_path, "--save-path", output_dir]
+        command = ["python", "models/DSNet/src/infer.py", "anchor-based",
+                    "--ckpt-path", chck_pt,
+                    "--source", video_path,
+                    "--save-path", output_dir,
+                    "--development", config['DEVELOPMENT']]
         print(command)
         DATABASE.update_video(video['id'], "status", "PROCESSING")
         result = subprocess.run(command, stdout=subprocess.PIPE)
