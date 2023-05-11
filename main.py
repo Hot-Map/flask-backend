@@ -7,6 +7,7 @@ from database import DATABASE
 from werkzeug.utils import secure_filename
 from flask import flash, request, redirect, url_for, render_template, jsonify, send_from_directory
 from video_processor import task
+import time
 
 SERVER_IS_RUNNING = True
 lock = threading.Lock()
@@ -39,7 +40,7 @@ def upload():
 		                             type=file_extension[1:], saved_name=save_filename, status='UPLOADED')
 		flash('Video successfully uploaded and displayed below')
 		print("dd", filename, file_extension)
-		return render_template('upload.html', filename=save_filename)
+		return render_template('upload.html', filename=save_filename, video_id=uuid)
 
 
 @app.route('/upload', methods=['POST'])
@@ -60,10 +61,23 @@ def upload_video():
 		save_filename = secure_filename(filename + '_' + str(now) + file_extension)
 		file.save(os.path.join(app.config['UPLOAD_FOLDER'], save_filename))
 		# print('upload_video filename: ' + filename)
-		uuid = DATABASE.insert_video(video_name=filename, datetime=now,
+		video_id = DATABASE.insert_video(video_name=filename, datetime=now,
 		                             type=file_extension[1:], saved_name=save_filename, status='UPLOADED')
-		flash('Video successfully uploaded and displayed below')
-		print("dd", filename, file_extension)
+		
+		while DATABASE.get_video_field(video_id=video_id, field="status") != 'COMPLETED':
+			time.sleep(2)
+
+		try:
+			filename = DATABASE.get_video_field(video_id=video_id, field="summary_name")
+			print("filename", filename)
+			if filename == "":
+				return jsonify({'error': f'{video_id} is not ready'})
+			return '/download/'+video_id
+		except Exception as e:
+			print(e)
+			print(video_id)
+			return jsonify({'error': 'video_id is not valid'})
+
 		return jsonify({'video_id': uuid})
 
 
