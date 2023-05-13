@@ -1,0 +1,17 @@
+# Commands
+## Run Server
+```bash
+python main.py
+```
+
+# Docker
+
+## Docker Build
+```bash
+docker build -t flask-backend .
+```
+
+## Docker Run
+```bash
+docker run -p 5001:5001 flask-backend
+```
