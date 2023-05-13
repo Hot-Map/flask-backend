@@ -4,8 +4,8 @@ import threading
 from app import app
 from datetime import datetime
 from video_processor import task
-from database import DATABASE, STATUS
 from werkzeug.utils import secure_filename
+from database import DATABASE, STATUS
 from flask import flash, request, redirect, url_for, render_template, jsonify, send_from_directory
 
 SERVER_IS_RUNNING = True
