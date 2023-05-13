@@ -3,7 +3,14 @@ import sqlite3
 from datetime import datetime
 
 
+class Status():
+    def __init__(self):
+        self.uploaded = "UPLOADED"
+        self.processing = "PROCESSING"
+        self.completed = "COMPLETED"
+        self.error = "ERROR"
 
+STATUS = Status()
 class Database():
     def __init__(self, path:str) :
         self.path = path
@@ -30,7 +37,7 @@ class Database():
             print(e)
             return False
         
-    def insert_video(self, video_name:str, type:str, datetime:datetime, saved_name:str, status:str='UPLOADED'):
+    def insert_video(self, video_name:str, type:str, datetime:datetime, saved_name:str, status:str=STATUS.uploaded):
         try:
             connection = self.get_connection()
             id = str(uuid.uuid4())
@@ -75,7 +82,7 @@ class Database():
     def get_video_to_process(self):
         try:
             connection = self.get_connection()
-            result = connection.cursor().execute(f"SELECT * FROM videos WHERE status = 'UPLOADED' ORDER BY upload_datetime ASC").fetchall()
+            result = connection.cursor().execute(f"SELECT * FROM videos WHERE status = {STATUS.uploaded} ORDER BY upload_datetime ASC").fetchall()
             connection.close()
             if result is not None:
                 result = result[0]
@@ -90,8 +97,7 @@ class Database():
                 return video
             return result
         except Exception as e:
-            #print(e)
+            print(e)
             return None
-        
 
 DATABASE = Database('videos.db')
