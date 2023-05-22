@@ -82,14 +82,13 @@ def main():
                 seq_len, pred_cls, pred_bboxes, cps, n_frames, nfps, picks)
 
         print('Writing summary video ...')
-
+        frame_labels = pred_summ
         frame_idx = 0
         while True:
             ret, frame = cap.read()
             if not ret:
                 break
 
-            frame_labels.append(pred_summ[frame_idx])
             if pred_summ[frame_idx]:
                 out.write(frame)
 
@@ -99,12 +98,19 @@ def main():
         cap.release()
 
 
-    print('Processing audio ...')
+    #print('Processing audio ...')
     audio_labels = repeat_items(frame_labels, int(rate_of_sample/fps))
-    
+    #print("frame_labels", len(frame_labels))
+    #print("rate_of_sample", rate_of_sample)
+    #print("fps", fps)
+    #print("rate_of_sample/fps", rate_of_sample/fps)
+    #print("int(rate_of_sample/fps)", int(rate_of_sample/fps))
+    #print("audio_labels", len(audio_labels))
     ch_list = []
     for ch in data_waveform:
-        ch_list.append(ch[audio_labels==1].numpy())
+        #print("ch", len(ch))
+        t_ch = ch[:len(audio_labels)]
+        ch_list.append(t_ch[audio_labels==1].numpy())
 
     new_waveform = torch.Tensor(ch_list)
     torchaudio.save(audio_processed_dir, new_waveform, rate_of_sample)
