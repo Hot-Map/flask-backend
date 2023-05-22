@@ -15,3 +15,16 @@ docker build -t flask-backend .
 ```bash
 docker run -p 5001:5001 flask-backend
 ```
+
+## Export Environment
+```bash
+conda env export --no-builds > environment.yaml
+```
+
+## Import Environment
+```bash
+conda env create -n elec491 -f environment.yaml
+```
+```bash
+conda install 'ffmpeg<5'
+```
