@@ -15,6 +15,7 @@ def task(config):
                     "--ckpt-path", chck_pt,
                     "--source", video_path,
                     "--save-path", output_dir,
+                    "--temp-folder", config['PROCESS_FOLDER'],
                     "--development", config['DEVELOPMENT']]
         print(command)
         DATABASE.update_video(video['id'], "status", STATUS.processing)

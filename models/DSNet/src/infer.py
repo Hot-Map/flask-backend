@@ -1,34 +1,76 @@
+import os
 import cv2
 import numpy as np
 import torch
 import random
+import torchaudio
+from moviepy.editor import *
 
 from helpers import init_helper, vsumm_helper, bbox_helper, video_helper
 from modules.model_zoo import get_model
+
+def repeat_items(lst, n):
+    repeated_list = [item for item in lst for _ in range(n)]
+    return np.array(repeated_list)
 
 
 def main():
     args = init_helper.get_arguments()
     print("args:", args)
 
+    file_name = os.path.splitext(os.path.basename(args.source))[0]
+
+    temp_summary_dir = f"{args.temp_folder}{file_name}.mp4"
+    audio_dir = f"{args.temp_folder}{file_name}.mp3"
+    audio_processed_dir = f"{args.temp_folder}{file_name}_processed.mp3"
+
+    print('Exporting audio ...')
+    video = VideoFileClip(args.source)
+    video.audio.write_audiofile(audio_dir)
+    data_waveform, rate_of_sample = torchaudio.load(audio_dir, format="mp3")
+
     if args.development == 'True': #random selected frames
+        print('Processing source video ...')
         cap = cv2.VideoCapture(args.source)
         width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
         height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
         fps = cap.get(cv2.CAP_PROP_FPS)
 
         fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-        out = cv2.VideoWriter(args.save_path, fourcc, fps, (width, height))
+        out = cv2.VideoWriter(temp_summary_dir, fourcc, fps, (width, height))
         frame_idx = 0
+        frame_labels = []
         while True:
             ret, frame = cap.read()
             if not ret:
                 break
-            if bool(random.randint(0, 1)):
+            take = bool(random.randint(0, 1))
+            frame_labels.append(take)
+            if take:
                 out.write(frame)
             frame_idx += 1
         out.release()
         cap.release()
+
+        print('Processing audio ...')
+        audio_labels = repeat_items(frame_labels, int(rate_of_sample/fps))
+        
+        ch_list = []
+        for ch in data_waveform:
+            ch_list.append(ch[audio_labels==1].numpy())
+
+        new_waveform = torch.Tensor(ch_list)
+        torchaudio.save(audio_processed_dir, new_waveform, rate_of_sample)
+
+        video = VideoFileClip(temp_summary_dir)
+        audio = AudioFileClip(audio_processed_dir)
+        video = video.set_audio(audio)
+        video.write_videofile(args.save_path, codec="libx264", audio_codec="aac")
+
+        # Remove temp files
+        os.remove(temp_summary_dir)
+        os.remove(audio_dir)
+        os.remove(audio_processed_dir)
         return
     
     # load model

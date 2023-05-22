@@ -54,6 +54,7 @@ def get_parser() -> argparse.ArgumentParser:
     parser.add_argument('--source', type=str, default=None)
     parser.add_argument('--save-path', type=str, default=None)
     parser.add_argument('--development', type=str, default='False')
+    parser.add_argument('--temp-folder', type=str, default=None)
 
     # common model config
     parser.add_argument('--base-model', type=str, default='attention',
