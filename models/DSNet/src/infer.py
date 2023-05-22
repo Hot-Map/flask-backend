@@ -29,17 +29,19 @@ def main():
     video.audio.write_audiofile(audio_dir)
     data_waveform, rate_of_sample = torchaudio.load(audio_dir, format="mp3")
 
+    cap = cv2.VideoCapture(args.source)
+    width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+    height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+    fps = cap.get(cv2.CAP_PROP_FPS)
+
+    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+    out = cv2.VideoWriter(temp_summary_dir, fourcc, fps, (width, height))
+
+    frame_labels = []
+
     if args.development == 'True': #random selected frames
         print('Processing source video ...')
-        cap = cv2.VideoCapture(args.source)
-        width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-        height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-        fps = cap.get(cv2.CAP_PROP_FPS)
-
-        fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-        out = cv2.VideoWriter(temp_summary_dir, fourcc, fps, (width, height))
         frame_idx = 0
-        frame_labels = []
         while True:
             ret, frame = cap.read()
             if not ret:
@@ -51,79 +53,71 @@ def main():
             frame_idx += 1
         out.release()
         cap.release()
-
-        print('Processing audio ...')
-        audio_labels = repeat_items(frame_labels, int(rate_of_sample/fps))
-        
-        ch_list = []
-        for ch in data_waveform:
-            ch_list.append(ch[audio_labels==1].numpy())
-
-        new_waveform = torch.Tensor(ch_list)
-        torchaudio.save(audio_processed_dir, new_waveform, rate_of_sample)
-
-        video = VideoFileClip(temp_summary_dir)
-        audio = AudioFileClip(audio_processed_dir)
-        video = video.set_audio(audio)
-        video.write_videofile(args.save_path, codec="libx264", audio_codec="aac")
-
-        # Remove temp files
-        os.remove(temp_summary_dir)
-        os.remove(audio_dir)
-        os.remove(audio_processed_dir)
-        return
     
-    # load model
-    print('Loading DSNet model ...')
-    model = get_model(args.model, **vars(args))
-    model = model.eval().to(args.device)
-    state_dict = torch.load(args.ckpt_path,
-                            map_location=lambda storage, loc: storage)
-    model.load_state_dict(state_dict)
+    else:
+        # load model
+        print('Loading DSNet model ...')
+        model = get_model(args.model, **vars(args))
+        model = model.eval().to(args.device)
+        state_dict = torch.load(args.ckpt_path,
+                                map_location=lambda storage, loc: storage)
+        model.load_state_dict(state_dict)
 
-    # load video
-    print('Preprocessing source video ...')
-    video_proc = video_helper.VideoPreprocessor(args.sample_rate)
-    n_frames, seq, cps, nfps, picks = video_proc.run(args.source)
-    seq_len = len(seq)
+        # load video
+        print('Preprocessing source video ...')
+        video_proc = video_helper.VideoPreprocessor(args.sample_rate)
+        n_frames, seq, cps, nfps, picks = video_proc.run(args.source)
+        seq_len = len(seq)
 
-    print('Predicting summary ...')
-    with torch.no_grad():
-        seq_torch = torch.from_numpy(seq).unsqueeze(0).to(args.device)
+        print('Predicting summary ...')
+        with torch.no_grad():
+            seq_torch = torch.from_numpy(seq).unsqueeze(0).to(args.device)
 
-        pred_cls, pred_bboxes = model.predict(seq_torch)
+            pred_cls, pred_bboxes = model.predict(seq_torch)
 
-        pred_bboxes = np.clip(pred_bboxes, 0, seq_len).round().astype(np.int32)
+            pred_bboxes = np.clip(pred_bboxes, 0, seq_len).round().astype(np.int32)
 
-        pred_cls, pred_bboxes = bbox_helper.nms(pred_cls, pred_bboxes, args.nms_thresh)
-        pred_summ = vsumm_helper.bbox2summary(
-            seq_len, pred_cls, pred_bboxes, cps, n_frames, nfps, picks)
+            pred_cls, pred_bboxes = bbox_helper.nms(pred_cls, pred_bboxes, args.nms_thresh)
+            pred_summ = vsumm_helper.bbox2summary(
+                seq_len, pred_cls, pred_bboxes, cps, n_frames, nfps, picks)
 
-    print('Writing summary video ...')
+        print('Writing summary video ...')
 
-    # load original video
-    cap = cv2.VideoCapture(args.source)
-    width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-    height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-    fps = cap.get(cv2.CAP_PROP_FPS)
+        frame_idx = 0
+        while True:
+            ret, frame = cap.read()
+            if not ret:
+                break
 
-    # create summary video writer
-    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-    out = cv2.VideoWriter(args.save_path, fourcc, fps, (width, height))
+            frame_labels.append(pred_summ[frame_idx])
+            if pred_summ[frame_idx]:
+                out.write(frame)
 
-    frame_idx = 0
-    while True:
-        ret, frame = cap.read()
-        if not ret:
-            break
+            frame_idx += 1
 
-        if pred_summ[frame_idx]:
-            out.write(frame)
+        out.release()
+        cap.release()
 
-        frame_idx += 1
 
-    out.release()
-    cap.release()
+    print('Processing audio ...')
+    audio_labels = repeat_items(frame_labels, int(rate_of_sample/fps))
+    
+    ch_list = []
+    for ch in data_waveform:
+        ch_list.append(ch[audio_labels==1].numpy())
+
+    new_waveform = torch.Tensor(ch_list)
+    torchaudio.save(audio_processed_dir, new_waveform, rate_of_sample)
+
+    video = VideoFileClip(temp_summary_dir)
+    audio = AudioFileClip(audio_processed_dir)
+    video = video.set_audio(audio)
+    video.write_videofile(args.save_path, codec="libx264", audio_codec="aac")
+
+    # Remove temp files
+    os.remove(temp_summary_dir)
+    os.remove(audio_dir)
+    os.remove(audio_processed_dir)
 
 
 if __name__ == '__main__':
