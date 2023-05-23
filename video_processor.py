@@ -20,7 +20,7 @@ def task(config):
                     "--save-path", output_dir,
                     "--temp-folder", config['APP']['PROCESS_FOLDER'],
                     "--development", config['APP']['DEVELOPMENT'],
-                    "--audio", config['APP']['AUDIO'],
+                    "--audio", str(bool(video['audio'])),
                     "--change-points", config['MODEL']['CHANGE_POINTS'],
                     "--device", device,
                     "--proportion", str(video['proportion'])]

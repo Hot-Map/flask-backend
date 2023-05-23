@@ -156,4 +156,5 @@ cython_debug/
 
 *.mp4
 *.mp3
+*.db
 .vscode/settings.json

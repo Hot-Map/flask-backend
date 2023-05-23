@@ -28,3 +28,6 @@ conda env create -n elec491 -f environment.yaml
 ```bash
 conda install 'ffmpeg<5'
 ```
+```bash
+conda install ffmpeg=4.3 -c conda-forge
+```

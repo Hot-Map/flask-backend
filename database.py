@@ -28,6 +28,7 @@ class Database():
                         name TEXT,
                         upload_datetime DATETIME,
                         proportion FLOAT,
+                        audio INT,
                         type TEXT,
                         saved_name TEXT,
                         summary_name TEXT,
@@ -39,12 +40,12 @@ class Database():
             print(e)
             return False
         
-    def insert_video(self, video_name:str, type:str, datetime:datetime, proportion:float, saved_name:str, status:str=STATUS.uploaded):
+    def insert_video(self, video_name:str, type:str, datetime:datetime, proportion:float, audio:int, saved_name:str, status:str=STATUS.uploaded):
         try:
             connection = self.get_connection()
             id = str(uuid.uuid4())
-            connection.cursor().execute("INSERT INTO videos VALUES (?,?,?,?,?,?,?,?)",
-                                        (id, video_name, datetime, proportion, type, saved_name, "", status))
+            connection.cursor().execute("INSERT INTO videos VALUES (?,?,?,?,?,?,?,?,?)",
+                                        (id, video_name, datetime, proportion, audio, type, saved_name, "", status))
             connection.commit()
             connection.close()
             return id
@@ -94,10 +95,11 @@ class Database():
                     video['name'] = result[1]
                     video['upload_datetime'] = result[2]
                     video['proportion'] = result[3]
-                    video['type'] = result[4]
-                    video['saved_name'] = result[5]
-                    video['summary_name'] = result[6]
-                    video['status'] = result[7]
+                    video['audio'] = result[4]
+                    video['type'] = result[5]
+                    video['saved_name'] = result[6]
+                    video['summary_name'] = result[7]
+                    video['status'] = result[8]
                     return video
             return None
         except Exception as e:

@@ -23,6 +23,7 @@ def upload():
         flash("No file part")
         return redirect(request.url)
     proportion = float(request.form.get("proportion", 0.30))
+    audio = int(request.form.get("audio", 1))
     file = request.files["file"]
     if file.filename == "":
         flash("No image selected for uploading")
@@ -40,6 +41,7 @@ def upload():
             video_name=filename,
             datetime=now,
             proportion=proportion,
+            audio=audio,
             type=file_extension[1:],
             saved_name=save_filename,
             status=STATUS.uploaded,
@@ -53,6 +55,7 @@ def upload_video():
     if "file" not in request.files:
         return redirect(request.url)
     proportion = float(request.form.get("proportion", 0.30))
+    audio = int(request.form.get("audio", 1))
     
     file = request.files["file"]
     if file.filename == "":
@@ -70,6 +73,7 @@ def upload_video():
                 video_name=filename,
                 datetime=now,
                 proportion=proportion,
+                audio=audio,
                 type=file_extension[1:],
                 saved_name=save_filename,
                 status=STATUS.uploaded,
@@ -88,7 +92,7 @@ def upload_video():
             print("filename", filename)
             if filename == "":
                 return jsonify({"error": f"{video_id} is not ready"})
-            return "/download/" + video_id  # jsonify({'video_id': video_id})
+            return video_id  # jsonify({'video_id': video_id})
         except Exception as e:
             print(e)
             print(video_id)
