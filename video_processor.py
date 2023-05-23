@@ -4,19 +4,21 @@ from database import DATABASE, STATUS
 
 def task(config):
     print("tick")
-    chck_pt = config['CHECKPOINT']
+    chck_pt = config['MODEL']['CHECKPOINT']
     video = DATABASE.get_video_to_process()
     if video is not None:
         print(video)
-        video_path = config['UPLOAD_FOLDER'] + video['saved_name']
-        output_dir = config['SUMMARY_FOLDER'] + 'summary-' + video['saved_name']
+        video_path = config['APP']['UPLOAD_FOLDER'] + video['saved_name']
+        output_dir = config['APP']['SUMMARY_FOLDER'] + 'summary-' + video['saved_name']
 
         command = ["python", "models/DSNet/src/infer.py", "anchor-based",
                     "--ckpt-path", chck_pt,
                     "--source", video_path,
                     "--save-path", output_dir,
-                    "--temp-folder", config['PROCESS_FOLDER'],
-                    "--development", config['DEVELOPMENT']]
+                    "--temp-folder", config['APP']['PROCESS_FOLDER'],
+                    "--development", config['APP']['DEVELOPMENT'],
+                    "--audio", config['APP']['AUDIO'],
+                    "--change-points", config['MODEL']['CHANGE_POINTS']]
         print(command)
         DATABASE.update_video(video['id'], "status", STATUS.processing)
         result = subprocess.run(command, stdout=subprocess.PIPE)

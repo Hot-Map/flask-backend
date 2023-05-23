@@ -33,7 +33,7 @@ def upload():
 
         now = datetime.now()
         save_filename = secure_filename(filename + "_" + str(now) + file_extension)
-        file.save(os.path.join(app.config["UPLOAD_FOLDER"], save_filename))
+        file.save(os.path.join(app.config['APP']["UPLOAD_FOLDER"], save_filename))
 
         uuid = DATABASE.insert_video(
             video_name=filename,
@@ -61,7 +61,7 @@ def upload_video():
 
             now = datetime.now()
             save_filename = secure_filename(filename + "_" + str(now) + file_extension)
-            file.save(os.path.join(app.config["UPLOAD_FOLDER"], save_filename))
+            file.save(os.path.join(app.config['APP']["UPLOAD_FOLDER"], save_filename))
             video_id = DATABASE.insert_video(
                 video_name=filename,
                 datetime=now,
@@ -119,7 +119,7 @@ def download(video_id):
         if filename == "":
             return jsonify({"error": f"{video_id} is not ready"})
         return send_from_directory(
-            app.config["SUMMARY_FOLDER"], filename, as_attachment=True
+            app.config['APP']["SUMMARY_FOLDER"], filename, as_attachment=True
         )
     except Exception as e:
         print(e)

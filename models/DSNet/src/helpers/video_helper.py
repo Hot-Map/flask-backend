@@ -95,10 +95,13 @@ class VideoPreprocessor(object):
             n_frame_per_seg.append(f1 - f0 + 1)
         return change_points, n_frame_per_seg
 
-    def run(self, video_path: PathLike):
+    def run(self, video_path: PathLike, change_points: str):
+        print("change_points:", change_points)
         n_frames, features = self.get_features(video_path)
         seq_len = len(features)
         picks = np.arange(0, seq_len) * self.sample_rate
-        #cps, nfps = self.kts(n_frames, features)
-        cps, nfps = self.get_change_points(video_path)
+        if change_points == 'KTS':
+            cps, nfps = self.kts(n_frames, features)
+        else: #SCENE_DETECT
+            cps, nfps = self.get_change_points(video_path)
         return n_frames, features, cps, nfps, picks

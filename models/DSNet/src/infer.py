@@ -20,14 +20,15 @@ def main():
 
     file_name = os.path.splitext(os.path.basename(args.source))[0]
 
-    temp_summary_dir = f"{args.temp_folder}{file_name}.mp4"
+    temp_summary_dir = f"{args.temp_folder}{file_name}.mp4" if args.audio == 'True' else args.save_path
     audio_dir = f"{args.temp_folder}{file_name}.mp3"
     audio_processed_dir = f"{args.temp_folder}{file_name}_processed.mp3"
 
-    print('Exporting audio ...')
-    video = VideoFileClip(args.source)
-    video.audio.write_audiofile(audio_dir)
-    data_waveform, rate_of_sample = torchaudio.load(audio_dir, format="mp3")
+    if args.audio == 'True':
+        print('Exporting audio ...')
+        video = VideoFileClip(args.source)
+        video.audio.write_audiofile(audio_dir)
+        data_waveform, rate_of_sample = torchaudio.load(audio_dir, format="mp3")
 
     cap = cv2.VideoCapture(args.source)
     width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
@@ -66,7 +67,7 @@ def main():
         # load video
         print('Preprocessing source video ...')
         video_proc = video_helper.VideoPreprocessor(args.sample_rate)
-        n_frames, seq, cps, nfps, picks = video_proc.run(args.source)
+        n_frames, seq, cps, nfps, picks = video_proc.run(args.source, args.change_points)
         seq_len = len(seq)
 
         print('Predicting summary ...')
@@ -97,33 +98,33 @@ def main():
         out.release()
         cap.release()
 
+    if args.audio == 'True':
+        #print('Processing audio ...')
+        audio_labels = repeat_items(frame_labels, int(rate_of_sample/fps))
+        #print("frame_labels", len(frame_labels))
+        #print("rate_of_sample", rate_of_sample)
+        #print("fps", fps)
+        #print("rate_of_sample/fps", rate_of_sample/fps)
+        #print("int(rate_of_sample/fps)", int(rate_of_sample/fps))
+        #print("audio_labels", len(audio_labels))
+        ch_list = []
+        for ch in data_waveform:
+            #print("ch", len(ch))
+            t_ch = ch[:len(audio_labels)]
+            ch_list.append(t_ch[audio_labels==1].numpy())
 
-    #print('Processing audio ...')
-    audio_labels = repeat_items(frame_labels, int(rate_of_sample/fps))
-    #print("frame_labels", len(frame_labels))
-    #print("rate_of_sample", rate_of_sample)
-    #print("fps", fps)
-    #print("rate_of_sample/fps", rate_of_sample/fps)
-    #print("int(rate_of_sample/fps)", int(rate_of_sample/fps))
-    #print("audio_labels", len(audio_labels))
-    ch_list = []
-    for ch in data_waveform:
-        #print("ch", len(ch))
-        t_ch = ch[:len(audio_labels)]
-        ch_list.append(t_ch[audio_labels==1].numpy())
+        new_waveform = torch.Tensor(ch_list)
+        torchaudio.save(audio_processed_dir, new_waveform, rate_of_sample)
 
-    new_waveform = torch.Tensor(ch_list)
-    torchaudio.save(audio_processed_dir, new_waveform, rate_of_sample)
+        video = VideoFileClip(temp_summary_dir)
+        audio = AudioFileClip(audio_processed_dir)
+        video = video.set_audio(audio)
+        video.write_videofile(args.save_path, codec="libx264", audio_codec="aac")
 
-    video = VideoFileClip(temp_summary_dir)
-    audio = AudioFileClip(audio_processed_dir)
-    video = video.set_audio(audio)
-    video.write_videofile(args.save_path, codec="libx264", audio_codec="aac")
-
-    # Remove temp files
-    os.remove(temp_summary_dir)
-    os.remove(audio_dir)
-    os.remove(audio_processed_dir)
+        # Remove temp files
+        os.remove(temp_summary_dir)
+        os.remove(audio_dir)
+        os.remove(audio_processed_dir)
 
 
 if __name__ == '__main__':
