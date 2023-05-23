@@ -1,11 +1,11 @@
 import os
 import time
 import threading
-from app import app
 from datetime import datetime
 from video_processor import task
-from werkzeug.utils import secure_filename
 from database import DATABASE, STATUS
+from werkzeug.utils import secure_filename
+from app import app, set_config, filter_dictionary
 from flask import flash, request, redirect, url_for, render_template, jsonify, send_from_directory
 
 SERVER_IS_RUNNING = True
@@ -125,6 +125,33 @@ def download(video_id):
         print(e)
         print(video_id)
         return jsonify({"error": "video_id is not valid"})
+    
+@app.route("/config/<path:section>", methods=["GET"])
+def update_config(section):
+    try:
+        if section.lower() =='default':
+            set_config(app)
+            return jsonify(filter_dictionary(app.config))
+
+        section = section.upper()
+        if section in app.config.keys():
+            if isinstance(app.config[section], dict):
+                for k, v in request.args.items():
+                    k = k.upper()
+                    print(k, v)
+                    if k in app.config[section].keys():
+                        print(2, k, v)
+                        v_type = type(app.config[section][k]) if app.config[section][k] is not None else type("")
+                        print(v_type)
+                        print(v_type(v))
+                        app.config[section][k] = v_type(v)
+    except Exception as e:
+        print(e)
+    return jsonify(filter_dictionary(app.config))
+
+@app.route("/config", methods=["GET"])
+def config():
+    return jsonify(filter_dictionary(app.config))
 
 
 def run_script():
