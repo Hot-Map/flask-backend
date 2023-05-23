@@ -14,7 +14,9 @@ from kts.cpd_auto import cpd_auto
 
 
 class FeatureExtractor(object):
-    def __init__(self):
+    def __init__(self, device: str):
+        self.device = device
+        print("FeatureExtractor", self.device)
         self.preprocess = transforms.Compose([
             transforms.Resize(256),
             transforms.CenterCrop(224),
@@ -23,14 +25,14 @@ class FeatureExtractor(object):
         ])
         self.model = models.googlenet(pretrained=True)
         self.model = nn.Sequential(*list(self.model.children())[:-2])
-        self.model = self.model.cuda().eval()
+        self.model = self.model.to(self.device).eval()
 
     def run(self, img: np.ndarray) -> np.ndarray:
         img = Image.fromarray(img)
         img = self.preprocess(img)
         batch = img.unsqueeze(0)
         with torch.no_grad():
-            feat = self.model(batch.cuda())
+            feat = self.model(batch.to(self.device))
             feat = feat.squeeze().cpu().numpy()
 
         assert feat.shape == (1024,), f'Invalid feature shape {feat.shape}: expected 1024'
@@ -40,8 +42,10 @@ class FeatureExtractor(object):
 
 
 class VideoPreprocessor(object):
-    def __init__(self, sample_rate: int) -> None:
-        self.model = FeatureExtractor()
+    def __init__(self, sample_rate: int, device: str) -> None:
+        self.device = device
+        print("VideoPreprocessor", self.device)
+        self.model = FeatureExtractor(self.device)
         self.sample_rate = sample_rate
 
     def get_features(self, video_path: PathLike):

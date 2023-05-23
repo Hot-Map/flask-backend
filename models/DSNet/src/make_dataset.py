@@ -15,6 +15,7 @@ def main():
     parser.add_argument('--label-dir', type=str, default='../custom_data/labels/')
     parser.add_argument('--sample-rate', type=int, default=15)
     parser.add_argument('--save-path', type=str, default='../custom_data/custom_dataset.h5')
+    parser.add_argument('--device', type=str, default='cuda', choices=('cuda', 'cpu'))
     args = parser.parse_args()
 
     # create output directory
@@ -26,7 +27,7 @@ def main():
 
     # feature extractor
     print('Loading feature extractor ...')
-    video_proc = video_helper.VideoPreprocessor(args.sample_rate)
+    video_proc = video_helper.VideoPreprocessor(args.sample_rate, args.device)
 
     # search all videos with .mp4 suffix
     video_paths = sorted(Path(args.video_dir).glob('*.mp4'))

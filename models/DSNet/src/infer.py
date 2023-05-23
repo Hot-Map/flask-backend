@@ -66,7 +66,7 @@ def main():
 
         # load video
         print('Preprocessing source video ...')
-        video_proc = video_helper.VideoPreprocessor(args.sample_rate)
+        video_proc = video_helper.VideoPreprocessor(args.sample_rate, args.device)
         n_frames, seq, cps, nfps, picks = video_proc.run(args.source, args.change_points)
         seq_len = len(seq)
 
@@ -110,8 +110,10 @@ def main():
         ch_list = []
         for ch in data_waveform:
             #print("ch", len(ch))
-            t_ch = ch[:len(audio_labels)]
-            ch_list.append(t_ch[audio_labels==1].numpy())
+            ss = min(len(audio_labels), len(ch))
+            t_ch = ch[:ss]
+            labels = audio_labels[:ss]
+            ch_list.append(t_ch[labels==1].numpy())
 
         new_waveform = torch.Tensor(ch_list)
         torchaudio.save(audio_processed_dir, new_waveform, rate_of_sample)
