@@ -58,6 +58,7 @@ def get_parser() -> argparse.ArgumentParser:
     parser.add_argument('--change-points', type=str, default='KTS',
                         choices=('KTS', 'SCENE_DETECT'))
     parser.add_argument('--audio', type=str, default='True')
+    parser.add_argument('--proportion', type=float, default=0.15)
 
     # common model config
     parser.add_argument('--base-model', type=str, default='attention',

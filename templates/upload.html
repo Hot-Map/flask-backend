@@ -24,6 +24,10 @@
         <p>
             <input type="file" name="file" autocomplete="off" required>
         </p>
+        <p>
+            <label for="proportion">Proportion:</label>
+            <input type="range" id="proportion" name="proportion" min="0" max="1" step="0.01" value="0.30">
+        </p>
     </dl>
     <p>
         <input type="submit" value="Upload">
@@ -31,7 +35,7 @@
 </form>
 
 {% if video_id %}
-    <h2>video_id: {{video_id}}</h2>
+    <h2>video_id: {{ video_id }}</h2>
 {% endif %}
 
 {% if videos %}

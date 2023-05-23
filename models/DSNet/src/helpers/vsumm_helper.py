@@ -107,7 +107,8 @@ def bbox2summary(seq_len: int,
                  change_points: np.ndarray,
                  n_frames: int,
                  nfps: np.ndarray,
-                 picks: np.ndarray
+                 picks: np.ndarray,
+                 proportion: float = 0.15
                  ) -> np.ndarray:
     """Convert predicted bounding boxes to summary"""
     score = np.zeros(seq_len, dtype=np.float32)
@@ -115,7 +116,7 @@ def bbox2summary(seq_len: int,
         lo, hi = pred_bboxes[bbox_idx, 0], pred_bboxes[bbox_idx, 1]
         score[lo:hi] = np.maximum(score[lo:hi], [pred_cls[bbox_idx]])
 
-    pred_summ = get_keyshot_summ(score, change_points, n_frames, nfps, picks)
+    pred_summ = get_keyshot_summ(score, change_points, n_frames, nfps, picks, proportion)
     return pred_summ
 
 

@@ -22,6 +22,7 @@ def upload():
     if "file" not in request.files:
         flash("No file part")
         return redirect(request.url)
+    proportion = float(request.form.get("proportion", 0.30))
     file = request.files["file"]
     if file.filename == "":
         flash("No image selected for uploading")
@@ -38,6 +39,7 @@ def upload():
         uuid = DATABASE.insert_video(
             video_name=filename,
             datetime=now,
+            proportion=proportion,
             type=file_extension[1:],
             saved_name=save_filename,
             status=STATUS.uploaded,
@@ -50,6 +52,8 @@ def upload():
 def upload_video():
     if "file" not in request.files:
         return redirect(request.url)
+    proportion = float(request.form.get("proportion", 0.30))
+    
     file = request.files["file"]
     if file.filename == "":
         return redirect(request.url)
@@ -65,6 +69,7 @@ def upload_video():
             video_id = DATABASE.insert_video(
                 video_name=filename,
                 datetime=now,
+                proportion=proportion,
                 type=file_extension[1:],
                 saved_name=save_filename,
                 status=STATUS.uploaded,
@@ -109,6 +114,32 @@ def get_video(video_id):
         response = {"exception": e}
 
     return jsonify(response)
+
+
+@app.route("/remove/<path:video_id>", methods=["GET"])
+def remove(video_id):
+    try:
+        status = DATABASE.get_video_field(video_id=video_id, field="status")
+        if status == STATUS.processing:
+            return video_id + " is under process. Cannot be deleted right now."
+        filename = DATABASE.get_video_field(video_id=video_id, field="saved_name")
+        summary_filename = DATABASE.get_video_field(video_id=video_id, field="summary_name")
+        print("Removing:", filename, ", ", summary_filename)
+        if filename is not None:
+            try:
+                os.remove(os.path.join(app.config['APP']["UPLOAD_FOLDER"], filename))
+            except:
+                pass
+        if summary_filename is not None:
+            if summary_filename !='':
+                try:
+                    os.remove(os.path.join(app.config['APP']["SUMMARY_FOLDER"], summary_filename))
+                except:
+                    pass
+        DATABASE.update_video(video_id=video_id, field="status", value=STATUS.removed)
+    except Exception as e:
+        pass
+    return video_id + " " + "removed"
 
 
 @app.route("/download/<path:video_id>", methods=["GET"])

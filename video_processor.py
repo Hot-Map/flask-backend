@@ -22,7 +22,8 @@ def task(config):
                     "--development", config['APP']['DEVELOPMENT'],
                     "--audio", config['APP']['AUDIO'],
                     "--change-points", config['MODEL']['CHANGE_POINTS'],
-                    "--device", device]
+                    "--device", device,
+                    "--proportion", str(video['proportion'])]
         print(command)
         DATABASE.update_video(video['id'], "status", STATUS.processing)
         result = subprocess.run(command, stdout=subprocess.PIPE)

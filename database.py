@@ -9,6 +9,7 @@ class Status():
         self.processing = "PROCESSING"
         self.completed = "COMPLETED"
         self.error = "ERROR"
+        self.removed = "REMOVED"
 
 STATUS = Status()
 class Database():
@@ -26,6 +27,7 @@ class Database():
                         (id TEXT PRIMARY KEY ,
                         name TEXT,
                         upload_datetime DATETIME,
+                        proportion FLOAT,
                         type TEXT,
                         saved_name TEXT,
                         summary_name TEXT,
@@ -37,12 +39,12 @@ class Database():
             print(e)
             return False
         
-    def insert_video(self, video_name:str, type:str, datetime:datetime, saved_name:str, status:str=STATUS.uploaded):
+    def insert_video(self, video_name:str, type:str, datetime:datetime, proportion:float, saved_name:str, status:str=STATUS.uploaded):
         try:
             connection = self.get_connection()
             id = str(uuid.uuid4())
-            connection.cursor().execute("INSERT INTO videos VALUES (?,?,?,?,?,?,?)",
-                                        (id, video_name, datetime, type, saved_name, "", status))
+            connection.cursor().execute("INSERT INTO videos VALUES (?,?,?,?,?,?,?,?)",
+                                        (id, video_name, datetime, proportion, type, saved_name, "", status))
             connection.commit()
             connection.close()
             return id
@@ -91,10 +93,11 @@ class Database():
                     video['id'] = result[0]
                     video['name'] = result[1]
                     video['upload_datetime'] = result[2]
-                    video['type'] = result[3]
-                    video['saved_name'] = result[4]
-                    video['summary_name'] = result[5]
-                    video['status'] = result[6]
+                    video['proportion'] = result[3]
+                    video['type'] = result[4]
+                    video['saved_name'] = result[5]
+                    video['summary_name'] = result[6]
+                    video['status'] = result[7]
                     return video
             return None
         except Exception as e:

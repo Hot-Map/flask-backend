@@ -80,7 +80,7 @@ def main():
 
             pred_cls, pred_bboxes = bbox_helper.nms(pred_cls, pred_bboxes, args.nms_thresh)
             pred_summ = vsumm_helper.bbox2summary(
-                seq_len, pred_cls, pred_bboxes, cps, n_frames, nfps, picks)
+                seq_len, pred_cls, pred_bboxes, cps, n_frames, nfps, picks, args.proportion)
 
         print('Writing summary video ...')
         frame_labels = pred_summ
