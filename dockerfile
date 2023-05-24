@@ -3,7 +3,7 @@ FROM continuumio/miniconda3:latest
 WORKDIR /flask-backend
 COPY . /flask-backend
 
-RUN conda env create -n elec491 -f environment.yaml
+RUN conda create -n elec491 python=3.9 ipython
 
 RUN conda run -n elec491 pip install -r requirements.txt
 
