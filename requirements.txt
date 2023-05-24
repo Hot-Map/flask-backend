@@ -13,3 +13,4 @@ torchaudio==2.0.2
 torchvision==0.15.2
 tqdm==4.65.0
 Werkzeug==2.3.3
+soundfile==0.12.1
