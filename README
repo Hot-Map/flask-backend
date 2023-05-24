@@ -31,3 +31,9 @@ conda install 'ffmpeg<5'
 ```bash
 conda install ffmpeg=4.3 -c conda-forge
 ```
+```bash
+pip install soundfile
+```
+```bash
+pip install sox
+```
