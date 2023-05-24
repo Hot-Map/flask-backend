@@ -21,14 +21,14 @@ def main():
     file_name = os.path.splitext(os.path.basename(args.source))[0]
 
     temp_summary_dir = f"{args.temp_folder}{file_name}.mp4" if args.audio == 'True' else args.save_path
-    audio_dir = f"{args.temp_folder}{file_name}.mp3"
-    audio_processed_dir = f"{args.temp_folder}{file_name}_processed.mp3"
+    audio_dir = f"{args.temp_folder}{file_name}.wav"
+    audio_processed_dir = f"{args.temp_folder}{file_name}_processed.wav"
 
     if args.audio == 'True':
         print('Exporting audio ...')
         video = VideoFileClip(args.source)
-        video.audio.write_audiofile(audio_dir)
-        data_waveform, rate_of_sample = torchaudio.load(audio_dir, format="mp3")
+        video.audio.write_audiofile(audio_dir, codec='pcm_s16le')
+        data_waveform, rate_of_sample = torchaudio.load(audio_dir)
 
     cap = cv2.VideoCapture(args.source)
     width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
