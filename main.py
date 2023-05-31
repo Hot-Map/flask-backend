@@ -80,7 +80,7 @@ def upload_video():
             )
 
             status = DATABASE.get_video_field(video_id=video_id, field="status")
-            while status == STATUS.uploaded | status == STATUS.processing:
+            while status == STATUS.uploaded or status == STATUS.processing:
                 time.sleep(3)
         except Exception as e:
             print(e)
